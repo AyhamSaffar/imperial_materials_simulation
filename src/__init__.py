@@ -1,6 +1,6 @@
-# __init__.py
+'''text displayed at module import'''
 import pandas as pd
-from imperial_materials_simulation.main import Simulation, load_simulation
+from .main import Simulation, load_simulation
 
 starting_microstructure = pd.DataFrame(
     [[ 1.26130966, -3.6279824 ,  3.22874575],

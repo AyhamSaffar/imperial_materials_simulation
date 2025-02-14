@@ -2,9 +2,11 @@
 
 Molecular simulation tool made for the theory and simulation module taken by materials science and engineering undergraduates at Imperial College London.
 
-![minimal use example](examples/minimal_use_example.png)
+![minimal use example](scripts/minimal_use.png)
 
 It models the forces acting on a molecule in different situations and displays the results live using an interactive Jupyter notebook dashboard.
+
+See the docs folder for the **Quick Start Guide**.
 
 ## Method
 
@@ -28,15 +30,7 @@ This library can be installed from pypi:
 
     pip install imperial-materials-simulation
 
-For developement use, the codebase can be cloned from GitHub:
-
-    git clone https://github.com/AyhamSaffar/imperial-materials-simulation.git
-
-Dependancies for developement use can optionally be installed using the dedicated conda enviroment:
-
-    conda config --add channels conda-forge
-
-    conda create --name sim_env --file conda_env.txt
+This requires at least Python 3.9.
 
 ## Usage
 
@@ -46,21 +40,46 @@ All functionality and details are well documented in the doc-strings of the main
 
 *Minimal use*
 
-![minimal use example](examples/minimal_use_example.png)
+![minimal use example](scripts/minimal_use.png)
 
 *Data collection*
 
-![data collection example](examples/data_collection_example.png)
+![data collection example](scripts/data_collection.png)
 
 *Detailed Analysis*
 
-![detailed analysis example](examples/detailed_analysis_example.png)
+![detailed analysis example](scripts/detailed_analysis.png)
 
 ## Support
 
-Any issues with the library should be raised directly with Paul Tangney.
+If you encounter any problems, please create an issue on the [GitHub issue tracker](https://github.com/AyhamSaffar/imperial-materials-simulation/issues). I will endevour push a fix to PyPI as soon as I can.
 
-There is a known bug that sometimes makes the .display() method show a column of plots at once. This is being worked on, but for the moment can be fixed with a quick computer restart.
+Community contributions are also welcome. Feel free to create a pull request if you have implemented a bug fix or a feature.
+
+## Development Workflow
+
+Download the repo.
+
+    git clone https://github.com/AyhamSaffar/imperial-materials-simulation.git
+
+
+Install [uv](https://docs.astral.sh/uv/):
+
+    winget install --id=astral-sh.uv  -e
+    
+or
+
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+Create environment
+
+    uv sync
+
+Run code
+
+    uv run "scripts/Data Collection.py"
+
+Jupyter notebooks can be run by selecting the Python interpreter in the newly created .venv folder.
 
 ## Roadmap
 
@@ -73,6 +92,8 @@ The following features could be implemented down the road following popular dema
 - Added support for charged functional groups on the simulated molecule and a VRORV integrator to better account for the added electrostatic forces.
 
 - Add artist to run dataframe on dashboard so numbers are displayed in scientific format and the row for the current run gets highlighted.
+
+- Add arguements to the .display method to allow for changing the colour and style of the 3D rendered molecule.
 
 ## Authors and Acknowledgment
 

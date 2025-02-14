@@ -34,7 +34,7 @@ class Simulation():
       Parameters
       ----------
       n_atoms : int
-         Number of atoms in the simluated carbon chain.
+         Number of Carbon atoms in the simluated linear alkane chain.
 
       starting_temperature : int
          Temperature used when initiating atom velocities.

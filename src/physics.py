@@ -6,6 +6,7 @@ import numpy as np
 #compiles functions for much higher speed when called many times. Limited compatibility with numpy
 import numba as nb 
 
+@nb.jit(nopython=True, fastmath=True) #fastmath increases float64 innaccuracy by 4x (1.1e-16 to 4.4e-16) which is acceptable here
 def get_kintetic_energy(velocities, mass) -> np.float64:
     '''returns total kinetic energy of all atoms'''
     return np.sum(mass/2 * velocities**2)
@@ -15,7 +16,7 @@ def get_temperature(kinetic_energy: np.float64, n_atoms: int) -> np.float64:
     kb = 8.617333262e-05
     return 2 * kinetic_energy / (3 * (n_atoms-1) * kb)
 
-@nb.jit(nopython=True, fastmath=True) #fastmath increases float64 innaccuracy by 4x (1.1e-16 to 4.4e-16) which is acceptable here
+@nb.jit(nopython=True, fastmath=True)
 def get_bonding_interactions(positions: np.ndarray, equilibrium_bond_length: float, spring_constant: float) \
                                 -> list[np.ndarray, float]:
     '''returns bonding forces for each atom and the total bonding potential of all atoms'''

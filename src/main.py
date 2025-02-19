@@ -389,7 +389,7 @@ class Simulation():
          'F_rms': np.mean((F_b + F_nb)**2) ** 0.5,
          'L_end_to_end': np.sum((self.positions[0] - self.positions[-1]) ** 2) ** 0.5, 
       }
-      self.run_data = pd.concat([self.run_data, pd.DataFrame([current_state])])
+      self.run_data = pd.concat([self.run_data, pd.DataFrame([current_state])]).reset_index(drop=True)
    
    def _logging_step(self, step: int, step_data: list[dict], run_type: str, n_steps: int, temperature: float) -> None:
       '''Saves microstructure and updates display at appropriate steps'''

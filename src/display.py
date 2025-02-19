@@ -100,7 +100,7 @@ class SimulationDashboard():
         current_run_data = {'run': self.sim.run, 'type': run_type, 'n_steps': n_steps, 'T': temperature}
         with self.table_widget:
             clear_output()
-            display(pd.concat([self.sim.run_data, pd.DataFrame(current_run_data, index=[0])]))
+            display(pd.concat([self.sim.run_data, pd.DataFrame(current_run_data, index=[0])]).reset_index(drop=True))
         self._disable_observers()
         self.run_slider.max += 1
         self.step_slider.max = ((n_steps-1) // self.sim.microstructure_logging_interval) * self.sim.microstructure_logging_interval

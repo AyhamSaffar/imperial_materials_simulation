@@ -323,7 +323,7 @@ class Simulation():
       self._log_run_data(run_type='MMC', n_steps=n_steps, temperature=temperature)
       if self.is_being_displayed: self.dashboard.reset(self)
    
-   def display(self, live_display_interval: int = None):
+   def display(self, live_display_interval: int = None, show_config_panel: bool = False):
       '''
       Create an interactive dashboard that displays how the molecule's conformation and physical properties
       change throughout the simulation. The dashboard can only be displayed in Jupyter Notebook. The dashboard
@@ -335,6 +335,9 @@ class Simulation():
          How many steps are run between each live display update. Defaults to the microstructure logging
          interval but a larger interval will significantly speed up longer live-displayed runs. Note MMC
          runs have a 5x longer interval due to their higher run speed.
+      show_config_panel : bool, default=False
+         Whether to show the widgets that allow you to edit the way molecule is displayed. The configurable display
+         properties are atom radius, bond radius, atom colour, and bond colour.
       '''
       self.live_display_interval = self.microstructure_logging_interval
       if live_display_interval is not None:
@@ -346,7 +349,7 @@ class Simulation():
          shell = get_ipython().__class__.__name__
          if shell == 'ZMQInteractiveShell': #when in Jupyter Notebook
             self.is_being_displayed = True
-            self.dashboard = display.SimulationDashboard(self)
+            self.dashboard = display.SimulationDashboard(self, show_config_panel)
             self.dashboard.display(self)
          else:
             warnings.warn(f'This functionality is only available in a Jupyter Notebook, not a {shell} shell')

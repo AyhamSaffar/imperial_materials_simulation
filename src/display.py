@@ -16,42 +16,67 @@ class SimulationDashboard():
     molecules vary live with time. This is built on top of the library's Simulation object.
     '''
 
-    def __init__(self, sim) -> None:
+    def __init__(self, sim, show_config_panel: bool) -> None:
         '''Initiates internal methods, attributes, and dashboard widgets'''
-        #TODO replace matplotlib with plotly for speed
         matplotlib.use('module://ipympl.backend_nbagg')
         self.sim = sim
 
-        self.mol_viewer = py3Dmol.view(width=300, height=300)
+        #top box
+        self.table_widget = ipy.Output(layout=ipy.Layout(height='200px', overflow='auto'))
+        with self.table_widget:
+            display(self.sim.run_data)
+        self.run_slider = ipy.IntSlider(value=0, min=0, max=0, description='Run', orientation='vertical')
+        top_box = ipy.HBox(children=[self.run_slider, self.table_widget])
+
+        self.step_slider = ipy.IntSlider(value=0, min=0, max=0, step=self.sim.microstructure_logging_interval,
+                                         description='Step', orientation='Horizontal', layout=ipy.Layout(width='900px'))
+        
+        #data plotting
         with plt.ioff():
             self.fig, self.left_ax = plt.subplots(figsize=(6, 3))
-            self.fig.tight_layout(pad=2)
+            self.fig.tight_layout(rect=(0.05, 0.0, 0.95, 1.0))
             self.right_ax = self.left_ax.twinx()
             self.line = self.right_ax.axvline(x=0.5, color='black', linestyle='--')
         self.fig.canvas.header_visible = False
         self.fig.canvas.toolbar_visible = False
         self.fig.canvas.footer_visible = False
-        #TODO remove resize corner
 
-        self.observers_enabled = False
-        self.run_slider = ipy.IntSlider(value=0, min=0, max=0, description='Run', orientation='vertical')
-        self.table_widget = ipy.Output(layout=ipy.Layout(height='200px', overflow='auto'))
-        with self.table_widget:
-            display(self.sim.run_data)
-        top_box = ipy.HBox(children=[self.run_slider, self.table_widget])
-        self.step_slider = ipy.IntSlider(value=0, min=0, max=0, step=self.sim.microstructure_logging_interval,
-                                         description='Step', orientation='Horizontal', layout=ipy.Layout(width='900px'))
+        #plot box
         self.left_axis_selector = ipy.Dropdown(options=(), description='left (red)')
         self.right_axis_selector = ipy.Dropdown(options=(), description='right (blue)')
         selector_box = ipy.HBox(children=[self.left_axis_selector, self.right_axis_selector])
-        plot_box = ipy.Output()
-        with plot_box:
+        figure_box = ipy.Output()
+        with figure_box:
             self.fig.show()
-        plot_box = ipy.VBox(children=[plot_box, selector_box])
-        self.molecule_box = ipy.Output()
+        plot_box = ipy.VBox(children=[figure_box, selector_box])
+
+        #molecule viewer
+        self.mol_viewer = py3Dmol.view(width=300, height=300)
+        self.mol_viewer_box = ipy.Output()
+
+        #molecule box
+        self.atom_radius_slider = ipy.FloatSlider(value=0.5, min=0.0, max=1.0, step = 0.01, orientation='Horizontal',
+                                                   description='atom radius')
+        self.atom_radius_slider.observe(self._redraw_molecule, names='value')
+        self.bond_radius_slider = ipy.FloatSlider(value=0.2, min=0.0, max=1.0, step = 0.01, orientation='Horizontal',
+                                                   description='bond radius')
+        self.bond_radius_slider.observe(self._redraw_molecule, names='value')
+        self.atom_colour_selector = ipy.Dropdown(options=colours, description='atom colour', value='cyan')
+        self.atom_colour_selector.observe(self._redraw_molecule, names='value')
+        self.bond_colour_selector = ipy.Dropdown(options=colours, description='bond colour', value='silver')
+        self.bond_colour_selector.observe(self._redraw_molecule, names='value')
+        mol_config_box = ipy.VBox([self.atom_radius_slider, self.bond_radius_slider,
+                                        self.atom_colour_selector, self.bond_colour_selector])
+        mol_display_options = ipy.Accordion([mol_config_box], titles=['molecule display options'])
+        molecule_box = ipy.VBox([self.mol_viewer_box])
+        if show_config_panel:
+            molecule_box.children = [self.mol_viewer_box, mol_display_options]
         self._redraw_molecule()
-        bottom_box = ipy.HBox(children=[plot_box, self.molecule_box], layout=ipy.Layout(align_items='center'))
+        
+        #full display widget box
+        bottom_box = ipy.HBox(children=[plot_box, molecule_box], layout=ipy.Layout(align_items='center'))
         self.display_widget = ipy.VBox(children=[top_box, self.step_slider, bottom_box])
+        self.observers_enabled = False
         self._enable_observers()
     
     def display(self, sim) -> None:
@@ -75,7 +100,7 @@ class SimulationDashboard():
         current_run_data = {'run': self.sim.run, 'type': run_type, 'n_steps': n_steps, 'T': temperature}
         with self.table_widget:
             clear_output()
-            display(pd.concat([self.sim.run_data, pd.DataFrame(current_run_data, index=[0])]))
+            display(pd.concat([self.sim.run_data, pd.DataFrame(current_run_data, index=[0])]).reset_index(drop=True))
         self._disable_observers()
         self.run_slider.max += 1
         self.step_slider.max = ((n_steps-1) // self.sim.microstructure_logging_interval) * self.sim.microstructure_logging_interval
@@ -97,7 +122,7 @@ class SimulationDashboard():
         self._redraw_plot()
         self.step_slider.value = self.step_slider.max
 
-    def _step_slider_moved(self, _= None) -> None:  #placeholder arguement as widget observe calls method with redundant arguement 
+    def _step_slider_moved(self, _= None) -> None:  #placeholder arguement for widget observe calls method 
         self.step_slider.value = self.step_slider.value
         self._redraw_molecule()
         self.line.set_xdata([self.step_slider.value])
@@ -141,9 +166,13 @@ class SimulationDashboard():
         molecule_xyz = f'{len(structure)}\n some comment\n {structure.to_string(header=False, index=False)}'
         self.mol_viewer.clear()
         self.mol_viewer.addModel(molecule_xyz, 'xyz')
-        self.mol_viewer.setStyle({'stick': {'colorscheme': 'default'}, 'sphere': {'scale': 0.3, 'colorscheme': 'cyanCarbon'}})
+        bond_radius = 1e-5 if self.bond_radius_slider.value==0 else self.bond_radius_slider.value #allows hiding bond
+        self.mol_viewer.setStyle({
+            'stick': {'radius': bond_radius, 'color': self.bond_colour_selector.value},
+            'sphere': {'radius': self.atom_radius_slider.value, 'color': self.atom_colour_selector.value}
+            })
         self.mol_viewer.zoomTo()
-        with self.molecule_box:
+        with self.mol_viewer_box: #moving this line to __init__ will always stop intial molecule from displaying?
             self.mol_viewer.update()
         
     def _redraw_plot(self, _=None) -> None: 
@@ -159,3 +188,24 @@ class SimulationDashboard():
         self.right_ax.plot(np.arange(0, len(right_data), interval), right_data[::interval], color='blue')
         self.line = self.right_ax.axvline(x=self.step_slider.value, color='black', linestyle='--')
         self.fig.canvas.draw()
+
+colours = [
+    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue',
+    'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk',
+    'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki',
+    'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen',
+    'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue',
+    'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite',
+    'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory',
+    'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
+    'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 'lightpink', 'lightsalmon', 'lightseagreen',
+    'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
+    'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen',
+    'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream',
+    'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid',
+    'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum',
+    'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown',
+    'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen',
+    'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow',
+    'yellowgreen'
+    ]

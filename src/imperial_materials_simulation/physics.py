@@ -17,6 +17,16 @@ def get_temperature(kinetic_energy: np.float64, n_atoms: int) -> np.float64:
     return 2 * kinetic_energy / (3 * (n_atoms-1) * kb)
 
 @nb.jit(nopython=True, fastmath=True)
+def get_rms_force(forces: np.ndarray):
+    '''calculates root mean squared force from a force array. Compiled implementation to improve performance'''
+    return np.mean(forces**2) ** 0.5
+
+@nb.jit(nopython=True, fastmath=True)
+def get_end_to_end_length(positions: np.ndarray):
+    '''calculates end to end distance from a postions array. Compiled implementation to improve performance'''
+    return np.sum((positions[0] - positions[-1]) ** 2) ** 0.5
+
+@nb.jit(nopython=True, fastmath=True)
 def get_bonding_interactions(positions: np.ndarray, equilibrium_bond_length: float, spring_constant: float) \
                                 -> list[np.ndarray, float]:
     '''returns bonding forces for each atom and the total bonding potential of all atoms'''

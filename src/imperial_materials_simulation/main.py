@@ -119,8 +119,8 @@ class Simulation():
             'PE_bonding': PE_b,
             'PE_non_bonding': PE_nb,
             'PE_total': PE_b + PE_nb,
-            'F_rms': np.mean((F_b + F_nb)**2) ** 0.5,
-            'L_end_to_end': np.sum((self.positions[0] - self.positions[-1]) ** 2) ** 0.5,
+            'F_rms': physics.get_rms_force(F_b + F_nb),
+            'L_end_to_end': physics.get_end_to_end_length(self.positions),
          })
          self._logging_step(step, step_data, run_type='relax', n_steps=n_steps, temperature=0.0)
 
@@ -188,8 +188,8 @@ class Simulation():
             'T_actual': T_actual,
             'PE_total': PE_b + PE_nb,
             'KE_total': KE_total,
-            'F_rms': np.mean((F_b + F_nb)**2) ** 0.5,
-            'L_end_to_end': np.sum((self.positions[0] - self.positions[-1]) ** 2) ** 0.5,
+            'F_rms': physics.get_rms_force(F_b + F_nb),
+            'L_end_to_end': physics.get_end_to_end_length(self.positions),
          })
          self._logging_step(step, step_data, run_type='NVT', n_steps=n_steps, temperature=temperature)
       
@@ -261,8 +261,8 @@ class Simulation():
             'step': step,
             'PE_total': PE_b + PE_nb,
             'KE_total': KE_total,
-            'F_rms': np.mean((F_b + F_nb)**2) ** 0.5,
-            'L_end_to_end': np.sum((self.positions[0] - self.positions[-1]) ** 2) ** 0.5,
+            'F_rms': physics.get_rms_force(F_b + F_nb),
+            'L_end_to_end': physics.get_end_to_end_length(self.positions),
          })
          self._logging_step(step, step_data, run_type='NVE', n_steps=n_steps, temperature=temperature)
       
@@ -315,7 +315,7 @@ class Simulation():
             'step': step,
             'displacement_accepted': is_displacement_accepted,
             'PE_total': PE,
-            'L_end_to_end': np.sum((self.positions[0] - self.positions[-1]) ** 2) ** 0.5,
+            'L_end_to_end': physics.get_end_to_end_length(self.positions),
          })
          self._logging_step(step, step_data, run_type='MMC', n_steps=n_steps, temperature=temperature)
       
@@ -386,8 +386,8 @@ class Simulation():
          'PE_bonding': PE_b,
          'PE_non_bonding': PE_nb,
          'PE_total': PE_b + PE_nb, 
-         'F_rms': np.mean((F_b + F_nb)**2) ** 0.5,
-         'L_end_to_end': np.sum((self.positions[0] - self.positions[-1]) ** 2) ** 0.5, 
+         'F_rms': physics.get_rms_force(F_b + F_nb),
+         'L_end_to_end': physics.get_end_to_end_length(self.positions), 
       }
       self.run_data = pd.concat([self.run_data, pd.DataFrame([current_state])]).reset_index(drop=True)
    
